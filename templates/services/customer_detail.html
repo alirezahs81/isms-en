@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block title %}{{ customer }} — Customer Profile{% endblock %}
+{% block content %}
+<div class="btn-bar">
+  <a class="btn" href="{% url 'customer_edit' customer.pk %}">Edit Customer</a>
+  <a class="btn green" href="{% url 'invoices:create' %}">Issue Invoice</a>
+</div>
+<h2>👤 {{ customer.full_name }}</h2>
+<div class="card">
+  <p><b>Phone:</b> {{ customer.phone }}</p>
+  {% if customer.email %}<p><b>Email:</b> {{ customer.email }}</p>{% endif %}
+  {% if customer.company %}<p><b>Company:</b> {{ customer.company }}</p>{% endif %}
+  {% if customer.address %}<p><b>Address:</b> {{ customer.address }}</p>{% endif %}
+</div>
+
+<h2>Services</h2>
+{% if orders %}
+<table>
+  <tr><th>Plan</th><th>Start</th><th>End</th><th>Status</th><th></th></tr>
+  {% for o in orders %}
+  <tr>
+    <td>{{ o.plan }}</td>
+    <td>{{ o.start_date }}</td>
+    <td>{{ o.end_date }}</td>
+    <td><span class="badge {% if o.status == 'active' %}{% if o.is_expiring_soon %}warn{% else %}ok{% endif %}{% elif o.status == 'expired' %}bad{% else %}info{% endif %}">{{ o.get_status_display }}</span></td>
+    <td>
+      {% if o.status == 'active' %}<a class="btn small green" href="{% url 'order_renew' o.pk %}">Renew</a>{% endif %}
+      <a class="btn small" href="{% url 'invoices:from_order' o.pk %}">Issue Renewal Invoice</a>
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<div class="empty">No services registered for this customer.</div>
+{% endif %}
+
+<h2>Invoices</h2>
+{% if invoices %}
+<table>
+  <tr><th>Number</th><th>Plan</th><th>Amount</th><th>Status</th></tr>
+  {% for inv in invoices %}
+  <tr>
+    <td><a class="link" href="{% url 'invoices:detail' inv.pk %}">{{ inv.invoice_number }}</a></td>
+    <td>{{ inv.plan }}</td>
+    <td>{{ inv.total }} Toman</td>
+    <td><span class="badge {% if inv.status == 'paid' %}ok{% elif inv.status == 'unpaid' %}warn{% else %}info{% endif %}">{{ inv.get_status_display }}</span></td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<div class="empty">No invoices issued for this customer.</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="btn-bar"><a class="btn" href="{% url 'accounts:user_create' %}">+ New User</a></div>
+<h2>👥 System Users</h2>
+<table>
+  <tr><th>Username</th><th>Full Name</th><th>Email</th><th>Role</th></tr>
+  {% for u in users %}
+  <tr>
+    <td>{{ u.username }}</td>
+    <td>{{ u.get_full_name|default:'—' }}</td>
+    <td>{{ u.email|default:'—' }}</td>
+    <td><span class="badge {% if u.is_superuser %}bad{% elif u.is_staff %}ok{% endif %}">{% if u.is_superuser %}Administrator{% elif u.is_staff %}Staff{% else %}Regular{% endif %}</span></td>
+  </tr>
+  {% endfor %}
+</table>
+{% endblock %}

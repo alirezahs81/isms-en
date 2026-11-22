@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block title %}Login{% endblock %}
+{% block content %}
+<div style="max-width:400px;margin:60px auto">
+  <h2 style="text-align:center">🔐 Internet Services Management System</h2>
+  {% if form.errors %}
+  <div class="msg" style="background:#ffebee;color:#c62828">Invalid username or password.</div>
+  {% endif %}
+  <form method="post">
+    {% csrf_token %}
+    <label>Username</label>
+    <input type="text" name="username" required autofocus>
+    <label>Password</label>
+    <input type="password" name="password" required>
+    <div style="margin-top:20px"><button type="submit" class="btn" style="width:100%">Sign In</button></div>
+  </form>
+</div>
+{% endblock %}

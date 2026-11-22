@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="btn-bar"><a class="btn" href="{% url 'customer_create' %}">+ New Customer</a></div>
+<h2>👥 Customers</h2>
+{% if customers %}
+<table>
+  <tr><th>Name</th><th>Phone</th><th>Company</th><th></th></tr>
+  {% for c in customers %}
+  <tr>
+    <td><a class="link" href="{% url 'customer_detail' c.pk %}">{{ c.full_name }}</a></td>
+    <td>{{ c.phone }}</td>
+    <td>{{ c.company|default:'—' }}</td>
+    <td><a class="btn small" href="{% url 'customer_edit' c.pk %}">Edit</a></td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<div class="empty">No customers registered.</div>
+{% endif %}
+{% endblock %}

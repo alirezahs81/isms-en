@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard — Internet Services Management System{% endblock %}
+{% block content %}
+<h2>Dashboard</h2>
+<div class="cards">
+  <div class="card"><div class="num">{{ customer_count }}</div><div class="lbl">Customers</div></div>
+  <div class="card"><div class="num">{{ active_count }}</div><div class="lbl">Active Services</div></div>
+  <div class="card"><div class="num">{{ plan_count }}</div><div class="lbl">Active Plans</div></div>
+  <div class="card"><div class="num">{{ month_income }} <small>Toman</small></div><div class="lbl">Income This Month</div></div>
+</div>
+
+<h2>⏰ Renewal Reminders — Services expiring within 14 days</h2>
+{% if expiring_orders %}
+<table>
+  <tr><th>Customer</th><th>Plan</th><th>End Date</th><th>Days Remaining</th><th></th></tr>
+  {% for o in expiring_orders %}
+  <tr>
+    <td><a class="link" href="{% url 'customer_detail' o.customer.pk %}">{{ o.customer }}</a></td>
+    <td>{{ o.plan }}</td>
+    <td>{{ o.end_date }}</td>
+    <td>{% if o.days_remaining < 0 %}<span class="badge bad">Expired</span>{% elif o.days_remaining <= 3 %}<span class="badge bad">{{ o.days_remaining }} days</span>{% else %}<span class="badge warn">{{ o.days_remaining }} days</span>{% endif %}</td>
+    <td><a class="btn small green" href="{% url 'order_renew' o.pk %}">Renew</a></td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<div class="empty">No services expire within the next 14 days ✅</div>
+{% endif %}
+
+<h2>💰 Unpaid Invoices</h2>
+{% if unpaid_invoices %}
+<table>
+  <tr><th>Number</th><th>Customer</th><th>Plan</th><th>Amount</th><th>Due Date</th></tr>
+  {% for inv in unpaid_invoices %}
+  <tr>
+    <td><a class="link" href="{% url 'invoices:detail' inv.pk %}">{{ inv.invoice_number }}</a></td>
+    <td>{{ inv.customer }}</td>
+    <td>{{ inv.plan }}</td>
+    <td>{{ inv.total }} Toman</td>
+    <td>{{ inv.due_date }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<div class="empty">No unpaid invoices ✅</div>
+{% endif %}
+{% endblock %}

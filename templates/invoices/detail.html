@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>🧾 Invoice {{ invoice.invoice_number }}</h2>
+<div class="card">
+  <p><b>Customer:</b> <a class="link" href="{% url 'customer_detail' invoice.customer.pk %}">{{ invoice.customer }}</a></p>
+  <p><b>Plan:</b> {{ invoice.plan }}</p>
+  <p><b>Amount:</b> {{ invoice.amount }} Toman {% if invoice.discount %}— <b>Discount:</b> {{ invoice.discount }} Toman{% endif %}</p>
+  <p><b>Total:</b> {{ invoice.total }} Toman</p>
+  <p><b>Issue Date:</b> {{ invoice.issue_date }} — <b>Due Date:</b> {{ invoice.due_date }}</p>
+  <p><b>Status:</b> <span class="badge {% if invoice.status == 'paid' %}ok{% elif invoice.status == 'unpaid' %}warn{% else %}info{% endif %}">{{ invoice.get_status_display }}</span></p>
+</div>
+
+<div class="btn-bar">
+  {% if invoice.status == 'unpaid' %}<a class="btn red" href="{% url 'invoices:cancel' invoice.pk %}">Cancel Invoice</a>{% endif %}
+</div>
+
+<h2>Record Payment</h2>
+{% if invoice.status != 'cancelled' %}
+<form method="post">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <div style="margin-top:16px"><button type="submit" class="btn green">Record Payment</button></div>
+</form>
+{% endif %}
+
+<h2>Recorded Payments</h2>
+{% if payments %}
+<table>
+  <tr><th>Amount</th><th>Method</th><th>Date</th><th>Reference</th></tr>
+  {% for p in payments %}
+  <tr><td>{{ p.amount }} Toman</td><td>{{ p.get_method_display }}</td><td>{{ p.paid_at }}</td><td>{{ p.reference|default:'—' }}</td></tr>
+  {% endfor %}
+</table>
+{% else %}
+<div class="empty">No payments recorded.</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="btn-bar"><a class="btn" href="{% url 'invoices:create' %}">+ New Invoice</a></div>
+<h2>🧾 Invoices</h2>
+<div class="filters">
+  <a href="{% url 'invoices:list' %}" class="{% if not status %}on{% endif %}">All</a>
+  <a href="?status=unpaid" class="{% if status == 'unpaid' %}on{% endif %}">Unpaid</a>
+  <a href="?status=paid" class="{% if status == 'paid' %}on{% endif %}">Paid</a>
+  <a href="?status=cancelled" class="{% if status == 'cancelled' %}on{% endif %}">Cancelled</a>
+</div>
+{% if invoices %}
+<table>
+  <tr><th>Number</th><th>Customer</th><th>Plan</th><th>Amount</th><th>Discount</th><th>Due Date</th><th>Status</th></tr>
+  {% for inv in invoices %}
+  <tr>
+    <td><a class="link" href="{% url 'invoices:detail' inv.pk %}">{{ inv.invoice_number }}</a></td>
+    <td>{{ inv.customer }}</td>
+    <td>{{ inv.plan }}</td>
+    <td>{{ inv.total }} Toman</td>
+    <td>{{ inv.discount|default:'—' }}</td>
+    <td>{{ inv.due_date }}</td>
+    <td><span class="badge {% if inv.status == 'paid' %}ok{% elif inv.status == 'unpaid' %}warn{% else %}info{% endif %}">{{ inv.get_status_display }}</span></td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<div class="empty">No invoices issued.</div>
+{% endif %}
+{% endblock %}
