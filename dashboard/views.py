@@ -1,4 +1,4 @@
-from django.contrib.auth.decorators import login_required
+from django.contrib.admin.views.decorators import staff_member_required
 from django.shortcuts import render
 from django.utils import timezone
 from datetime import timedelta
@@ -7,7 +7,7 @@ from services.models import Customer, ServicePlan, ServiceOrder
 from invoices.models import Invoice, Payment
 
 
-@login_required
+@staff_member_required
 def dashboard(request):
     today = timezone.localdate()
     soon = today + timedelta(days=14)
@@ -28,7 +28,7 @@ def dashboard(request):
     return render(request, 'dashboard.html', context)
 
 
-@login_required
+@staff_member_required
 def reports(request):
     income_by_month = {}
     for p in Payment.objects.select_related('invoice'):
