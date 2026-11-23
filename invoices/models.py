@@ -37,11 +37,11 @@ class Invoice(models.Model):
         super().clean()
         errors = {}
         if self.amount is not None and self.amount <= 0:
-            errors['amount'] = 'مبلغ Invoice باید بیشتر از صفر باشد.'
+            errors['amount'] = 'Invoice amount must be greater than zero.'
         if self.discount is not None and self.discount < 0:
             errors['discount'] = 'Discount cannot be negative.'
         if self.amount is not None and self.discount is not None and self.discount > self.amount:
-            errors['discount'] = 'تخفیف نمی‌تواند از مبلغ Invoice بیشتر باشد.'
+            errors['discount'] = 'Discount cannot exceed invoice amount.'
         if errors:
             raise ValidationError(errors)
 
@@ -60,7 +60,7 @@ class Invoice(models.Model):
                     try:
                         last_number = int(last.invoice_number.rsplit('-', 1)[1])
                     except (IndexError, ValueError):
-                        raise ValidationError({'invoice_number': 'Invoice number قبلی نامعتبر است.'})
+                        raise ValidationError({'invoice_number': 'The previous invoice number is invalid.'})
                 self.invoice_number = f'{prefix}{last_number + 1:04d}'
                 self.full_clean()
                 return super().save(*args, **kwargs)
@@ -83,7 +83,7 @@ class Payment(models.Model):
     METHOD_CHOICES = [
         ('cash', 'Cash'),
         ('card', 'Card transfer'),
-        ('online', 'درگاه آنلاین'),
+        ('online', 'Online gateway'),
         ('transfer', 'Bank transfer'),
     ]
 
@@ -95,7 +95,7 @@ class Payment(models.Model):
     recorded_by = models.ForeignKey('auth.User', on_delete=models.SET_NULL, null=True, verbose_name='Recorded by')
 
     class Meta:
-        verbose_name = 'پرداخت'
+        verbose_name = 'Payment'
         verbose_name_plural = 'Payments'
         ordering = ['-paid_at']
 
@@ -108,9 +108,9 @@ class Payment(models.Model):
             invoice = self.invoice
             paid = invoice.payments.exclude(pk=self.pk).aggregate(total=models.Sum('amount'))['total'] or Decimal('0')
             if invoice.status == 'cancelled':
-                errors['invoice'] = 'ثبت پرداخت برای Invoice ابطال‌شده مجاز نیست.'
+                errors['invoice'] = 'Payments cannot be recorded for a cancelled invoice.'
             elif self.amount > invoice.total - paid:
-                errors['amount'] = 'مبلغ پرداخت از مانده Invoice بیشتر است.'
+                errors['amount'] = 'Payment amount exceeds the outstanding invoice balance.'
         if errors:
             raise ValidationError(errors)
 
