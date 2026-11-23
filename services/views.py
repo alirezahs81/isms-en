@@ -1,5 +1,5 @@
 from django import forms
-from django.contrib.admin.views.decorators import staff_member_required
+from accounts.permissions import role_required
 from django.views.decorators.http import require_POST
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
@@ -31,7 +31,7 @@ class OrderForm(forms.ModelForm):
         }
 
 
-@staff_member_required
+@role_required('support', 'finance', 'admin')
 def customer_list(request):
     q = request.GET.get('q', '').strip()
     customers = Customer.objects.all()
@@ -40,7 +40,7 @@ def customer_list(request):
     return render(request, 'services/customers.html', {'customers': customers, 'q': q})
 
 
-@staff_member_required
+@role_required('support', 'finance', 'admin')
 def customer_detail(request, pk):
     customer = get_object_or_404(Customer, pk=pk)
     return render(request, 'services/customer_detail.html', {
@@ -50,7 +50,7 @@ def customer_detail(request, pk):
     })
 
 
-@staff_member_required
+@role_required('support', 'admin')
 def customer_create(request):
     if request.method == 'POST':
         form = CustomerForm(request.POST)
@@ -63,7 +63,7 @@ def customer_create(request):
     return render(request, 'form.html', {'form': form, 'title': 'New Customer'})
 
 
-@staff_member_required
+@role_required('support', 'admin')
 def customer_edit(request, pk):
     customer = get_object_or_404(Customer, pk=pk)
     if request.method == 'POST':
@@ -77,12 +77,12 @@ def customer_edit(request, pk):
     return render(request, 'form.html', {'form': form, 'title': f'Edit: {customer}'})
 
 
-@staff_member_required
+@role_required('support', 'finance', 'admin', 'viewer')
 def plan_list(request):
     return render(request, 'services/plans.html', {'plans': ServicePlan.objects.all()})
 
 
-@staff_member_required
+@role_required('support', 'admin')
 def plan_create(request):
     if request.method == 'POST':
         form = PlanForm(request.POST)
@@ -95,7 +95,7 @@ def plan_create(request):
     return render(request, 'form.html', {'form': form, 'title': 'New Service Plan'})
 
 
-@staff_member_required
+@role_required('support', 'finance', 'admin')
 def order_list(request):
     orders = ServiceOrder.objects.select_related('customer', 'plan')
     status = request.GET.get('status')
@@ -104,7 +104,7 @@ def order_list(request):
     return render(request, 'services/orders.html', {'orders': orders, 'status': status})
 
 
-@staff_member_required
+@role_required('support', 'admin')
 def order_create(request):
     if request.method == 'POST':
         form = OrderForm(request.POST)
@@ -120,7 +120,7 @@ def order_create(request):
     return render(request, 'form.html', {'form': form, 'title': 'New Service'})
 
 
-@staff_member_required
+@role_required('support', 'admin')
 @require_POST
 def order_renew(request, pk):
     """Renew a service for one more period from the current end date"""
