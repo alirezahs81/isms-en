@@ -1,5 +1,6 @@
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.models import User
+from django.contrib.auth.password_validation import validate_password
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django import forms
@@ -11,6 +12,11 @@ class UserForm(forms.ModelForm):
     class Meta:
         model = User
         fields = ['username', 'first_name', 'last_name', 'email', 'is_staff']
+
+    def clean_password(self):
+        password = self.cleaned_data['password']
+        validate_password(password, self.instance)
+        return password
 
 
 def is_admin(user):
