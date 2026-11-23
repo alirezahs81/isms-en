@@ -35,7 +35,7 @@ def invoice_list(request):
     return render(request, 'invoices/list.html', {'invoices': invoices, 'status': status})
 
 
-@login_required
+@staff_member_required
 def invoice_detail(request, pk):
     invoice = get_object_or_404(Invoice.objects.select_related('customer', 'plan'), pk=pk)
     paid = sum(p.amount for p in invoice.payments.all())
@@ -56,7 +56,7 @@ def invoice_detail(request, pk):
     })
 
 
-@login_required
+@staff_member_required
 def invoice_create(request):
     if request.method == 'POST':
         form = InvoiceForm(request.POST)
@@ -73,7 +73,8 @@ def invoice_create(request):
     return render(request, 'form.html', {'form': form, 'title': 'New Invoice'})
 
 
-@login_required
+@staff_member_required
+@require_POST
 def invoice_cancel(request, pk):
     invoice = get_object_or_404(Invoice, pk=pk)
     invoice.status = 'cancelled'
@@ -82,7 +83,8 @@ def invoice_cancel(request, pk):
     return redirect('invoice_detail', pk=pk)
 
 
-@login_required
+@staff_member_required
+@require_POST
 def invoice_from_order(request, order_pk):
     """Auto-issue an invoice for a service order"""
     order = get_object_or_404(ServiceOrder.objects.select_related('customer', 'plan'), pk=order_pk)
