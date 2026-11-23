@@ -1,78 +1,138 @@
 # Internet Services Management System (ISMS)
 
-Internet service sales & subscription management system — English UI (LTR)
+An internet-service sales and subscription management system with an English, left-to-right (LTR) interface.
 
-## ✨ Features
+## Features
 
-- 📊 **Dashboard**: overview stats, renewal reminders for services expiring within 14 days, unpaid invoices
-- 👥 **Customer management**: create, edit, search, and full customer profile with services and invoices
-- 📦 **Service plans**: three categories — Internet (ADSL/TD-LTE), Hosting/Domain/Server, Software Licenses — monthly to annual terms
-- 🖥 **Service management**: register services, filter by status, one-click renewal, issue renewal invoices
-- 🧾 **Invoices & payments**: auto-numbered invoices, discounts, payment recording (cash, card, online gateway, bank transfer), invoice cancellation — invoice status automatically becomes "Paid" once fully paid
-- 📈 **Reports**: monthly income, receivables, services distribution by category
-- 👤 **User management**: create admin/staff users (administrator only)
-- 🔐 **Django admin panel**: full data management at `/admin/`
+- **Dashboard:** overview statistics, renewal reminders for services expiring within 14 days, and unpaid invoices
+- **Customer management:** create, edit, search, and view customer profiles with services and invoices
+- **Service plans:** Internet (ADSL/TD-LTE), hosting/domain/server, and software licenses
+- **Service management:** register services, filter by status, renew services, and issue renewal invoices
+- **Invoices and payments:** automatic invoice numbering, discounts, payment recording, and invoice cancellation
+- **Reports and users:** income and receivables reports, plus admin/staff user management
+- **Django Admin:** data administration at `/admin/`
 
-Access is restricted to admin/staff. English, left-to-right interface.
+Administrative sections are restricted to authorized admin/staff users.
 
-## 🛠 Tech Stack
+## Technology and tested versions
 
-- Python 3.15 / Django 6.1
-- PostgreSQL 16
-- HTML/CSS (no frontend framework)
+- Python **3.12** in CI
+- Django dependency range from `requirements.txt`: `>=5.0,<7`
+- PostgreSQL **16** in CI
+- HTML/CSS
 
-## 🚀 Getting Started
+Django is not currently pinned to a specific patch release. Dependency installation selects an available compatible version within the declared range, so the exact installed Django version can change over time.
 
-```bash
-# Install dependencies
-pip install django psycopg2-binary
+## Prerequisites
 
-# Create the database in PostgreSQL
+- Python 3.12
+- PostgreSQL 16 (or a compatible PostgreSQL release)
+- Git (optional, for cloning the repository)
+
+## Setup on Windows PowerShell
+
+Run the following commands from the project root.
+
+### 1. Create a virtual environment and install dependencies
+
+```powershell
+py -3.12 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+If PowerShell blocks activation, you can install dependencies using the virtual environment's Python directly without changing the execution policy:
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+```
+
+### 2. Create the database
+
+If the PostgreSQL command-line tools are installed, run:
+
+```powershell
 psql -U postgres -c "CREATE DATABASE isms;"
+```
 
-# Set environment variables (optional — defaults: isms/postgres@127.0.0.1:5432)
-set ISMS_DB_NAME=isms
-set ISMS_DB_USER=postgres
-set ISMS_DB_PASSWORD=postgres
+Skip this step if the database already exists.
 
-# Run migrations
+### 3. Set environment variables for local development
+
+In PowerShell:
+
+```powershell
+$env:ISMS_DB_NAME = "isms"
+$env:ISMS_DB_USER = "postgres"
+$env:ISMS_DB_PASSWORD = "your_database_password"
+$env:ISMS_DB_HOST = "127.0.0.1"
+$env:ISMS_DB_PORT = "5432"
+$env:ISMS_DEBUG = "1"
+$env:ISMS_SECRET_KEY = (python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())")
+```
+
+These variables apply only to the current PowerShell session. Set them again in each new session before running the application.
+
+With `ISMS_DEBUG=1`, the settings allow a built-in development-only fallback key, although generating and using a random key as shown above is recommended. In the secure default mode (`ISMS_DEBUG=0`), `ISMS_SECRET_KEY` is required and the application will refuse to start without it.
+
+### 4. Run migrations, create an administrator, and start the server
+
+```powershell
 python manage.py migrate
-
-# Create an admin user
 python manage.py createsuperuser
-
-# Start the server
 python manage.py runserver
 ```
 
-Then open your browser at `http://127.0.0.1:8000`
+Open `http://127.0.0.1:8000` in your browser.
 
-> **Note:** This English version shares the same database schema as the Persian version — the Persian UI edition lives in a separate repository.
+## Environment variables
 
-## ⚙️ Environment Variables
-
-| Variable | Default | Description |
+| Variable | Code default | Description |
 |---|---|---|
 | `ISMS_DB_NAME` | `isms` | Database name |
 | `ISMS_DB_USER` | `postgres` | Database user |
-| `ISMS_DB_PASSWORD` | `postgres` | Database password |
+| `ISMS_DB_PASSWORD` | `postgres` | Database password; change it outside local development |
 | `ISMS_DB_HOST` | `127.0.0.1` | Database host |
 | `ISMS_DB_PORT` | `5432` | Database port |
-| `ISMS_DEBUG` | `1` | Debug mode (set to `0` in production) |
-| `ISMS_SECRET_KEY` | — | Django secret key |
+| `ISMS_DEBUG` | `0` | Only the value `1` enables debug mode |
+| `ISMS_SECRET_KEY` | unset | Required when debug mode is disabled |
+| `ISMS_ALLOWED_HOSTS` | `localhost,127.0.0.1,testserver` | Comma-separated allowed host names |
+| `ISMS_CSRF_TRUSTED_ORIGINS` | empty | Comma-separated trusted CSRF origins, including a scheme such as `https://example.com` |
+| `ISMS_SECURE_SSL_REDIRECT` | `1` when debug is disabled | Redirect HTTP requests to HTTPS |
+| `ISMS_HSTS_SECONDS` | `31536000` when debug is disabled | HSTS duration in seconds |
 
-## 📁 Project Structure
+## Production configuration
+
+- Set `ISMS_DEBUG=0` and provide a random, private `ISMS_SECRET_KEY` through your deployment environment or secret manager.
+- Configure `ISMS_ALLOWED_HOSTS` and, when needed, `ISMS_CSRF_TRUSTED_ORIGINS` for the actual deployment domains.
+- Replace the default database password.
+- SSL redirect and HSTS are enabled by default when debug mode is disabled. Serve the application behind valid HTTPS and configure your reverse proxy appropriately.
+- Never commit secrets to the Git repository.
+
+## Continuous integration (CI)
+
+GitHub Actions runs the following checks with Python 3.12 and PostgreSQL 16:
+1. Install dependencies
+2. Detect model changes without migrations using `python manage.py makemigrations --check --dry-run`
+3. Apply migrations
+4. Run `python manage.py check`
+5. Run the test suite
+
+A passing CI run does not replace deployment testing on the actual production infrastructure.
+
+## Project structure
 
 ```
 isms-en/
-├── services/     # Customers, service plans, service orders
+├── services/     # Customers, service plans, and service orders
 ├── invoices/     # Invoices and payments
-├── accounts/     # System user management
+├── accounts/     # User management
 ├── dashboard/    # Dashboard and reports
 ├── templates/    # English LTR templates
 └── isms/         # Project settings
 ```
 
-## 📄 License
+## License
 
 MIT
