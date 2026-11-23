@@ -1,4 +1,4 @@
-from django.contrib.admin.views.decorators import staff_member_required
+from accounts.permissions import role_required
 from django.shortcuts import render
 from django.utils import timezone
 from datetime import timedelta
@@ -7,7 +7,7 @@ from services.models import Customer, ServicePlan, ServiceOrder
 from invoices.models import Invoice, Payment
 
 
-@staff_member_required
+@role_required('admin', 'finance')
 def dashboard(request):
     today = timezone.localdate()
     soon = today + timedelta(days=14)
@@ -28,7 +28,7 @@ def dashboard(request):
     return render(request, 'dashboard.html', context)
 
 
-@staff_member_required
+@role_required('admin', 'finance')
 def reports(request):
     income_by_month = {}
     for p in Payment.objects.select_related('invoice'):
