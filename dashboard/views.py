@@ -7,7 +7,7 @@ from services.models import Customer, ServicePlan, ServiceOrder
 from invoices.models import Invoice, Payment
 
 
-@login_required
+@staff_member_required
 def dashboard(request):
     today = timezone.localdate()
     soon = today + timedelta(days=14)
