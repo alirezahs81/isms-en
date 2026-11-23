@@ -40,7 +40,7 @@ def customer_list(request):
     return render(request, 'services/customers.html', {'customers': customers, 'q': q})
 
 
-@login_required
+@staff_member_required
 def customer_detail(request, pk):
     customer = get_object_or_404(Customer, pk=pk)
     return render(request, 'services/customer_detail.html', {
@@ -50,7 +50,7 @@ def customer_detail(request, pk):
     })
 
 
-@login_required
+@staff_member_required
 def customer_create(request):
     if request.method == 'POST':
         form = CustomerForm(request.POST)
@@ -63,7 +63,7 @@ def customer_create(request):
     return render(request, 'form.html', {'form': form, 'title': 'New Customer'})
 
 
-@login_required
+@staff_member_required
 def customer_edit(request, pk):
     customer = get_object_or_404(Customer, pk=pk)
     if request.method == 'POST':
@@ -77,12 +77,12 @@ def customer_edit(request, pk):
     return render(request, 'form.html', {'form': form, 'title': f'Edit: {customer}'})
 
 
-@login_required
+@staff_member_required
 def plan_list(request):
     return render(request, 'services/plans.html', {'plans': ServicePlan.objects.all()})
 
 
-@login_required
+@staff_member_required
 def plan_create(request):
     if request.method == 'POST':
         form = PlanForm(request.POST)
@@ -95,7 +95,7 @@ def plan_create(request):
     return render(request, 'form.html', {'form': form, 'title': 'New Service Plan'})
 
 
-@login_required
+@staff_member_required
 def order_list(request):
     orders = ServiceOrder.objects.select_related('customer', 'plan')
     status = request.GET.get('status')
@@ -104,7 +104,7 @@ def order_list(request):
     return render(request, 'services/orders.html', {'orders': orders, 'status': status})
 
 
-@login_required
+@staff_member_required
 def order_create(request):
     if request.method == 'POST':
         form = OrderForm(request.POST)
@@ -120,7 +120,8 @@ def order_create(request):
     return render(request, 'form.html', {'form': form, 'title': 'New Service'})
 
 
-@login_required
+@staff_member_required
+@require_POST
 def order_renew(request, pk):
     """Renew a service for one more period from the current end date"""
     order = get_object_or_404(ServiceOrder, pk=pk)
