@@ -1,47 +1,54 @@
 from decimal import Decimal
 
 from django.core.exceptions import ValidationError
-from django.db import models, transaction, connection
+from django.db import connection, models, transaction
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 
 from services.models import Customer, ServicePlan
 
 
 class Invoice(models.Model):
     STATUS_CHOICES = [
-        ('unpaid', 'Unpaid'),
-        ('paid', 'Paid'),
-        ('cancelled', 'Cancelled'),
+        ('unpaid', _('Unpaid')),
+        ('paid', _('Paid')),
+        ('cancelled', _('Cancelled')),
     ]
 
-    invoice_number = models.CharField('Invoice number', max_length=20, unique=True, blank=True)
-    customer = models.ForeignKey(Customer, on_delete=models.PROTECT, related_name='invoices', verbose_name='Customer')
-    plan = models.ForeignKey(ServicePlan, on_delete=models.PROTECT, verbose_name='Plan')
-    amount = models.DecimalField('Amount (Toman)', max_digits=12, decimal_places=0)
-    discount = models.DecimalField('Discount (Toman)', max_digits=12, decimal_places=0, default=0)
-    status = models.CharField('Status', max_length=10, choices=STATUS_CHOICES, default='unpaid')
-    issue_date = models.DateField('Issue date', default=timezone.localdate)
-    due_date = models.DateField('Due date', null=True, blank=True)
-    notes = models.TextField('Notes', blank=True)
-    order = models.ForeignKey('services.ServiceOrder', on_delete=models.SET_NULL, null=True, blank=True,
-                              related_name='invoices', verbose_name='Related order')
-    created_by = models.ForeignKey('auth.User', on_delete=models.SET_NULL, null=True, verbose_name='Issued by')
+    invoice_number = models.CharField(_('Invoice number'), max_length=20, unique=True, blank=True)
+    customer = models.ForeignKey(
+        Customer, on_delete=models.PROTECT, related_name='invoices', verbose_name=_('Customer')
+    )
+    plan = models.ForeignKey(ServicePlan, on_delete=models.PROTECT, verbose_name=_('Plan'))
+    amount = models.DecimalField(_('Amount (Toman)'), max_digits=12, decimal_places=0)
+    discount = models.DecimalField(_('Discount (Toman)'), max_digits=12, decimal_places=0, default=0)
+    status = models.CharField(_('Status'), max_length=10, choices=STATUS_CHOICES, default='unpaid')
+    issue_date = models.DateField(_('Issue date'), default=timezone.localdate)
+    due_date = models.DateField(_('Due date'), null=True, blank=True)
+    notes = models.TextField(_('Notes'), blank=True)
+    order = models.ForeignKey(
+        'services.ServiceOrder', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='invoices', verbose_name=_('Related order'),
+    )
+    created_by = models.ForeignKey(
+        'auth.User', on_delete=models.SET_NULL, null=True, verbose_name=_('Issued by')
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        verbose_name = 'Invoice'
-        verbose_name_plural = 'Invoices'
+        verbose_name = _('Invoice')
+        verbose_name_plural = _('Invoices')
         ordering = ['-issue_date', '-id']
 
     def clean(self):
         super().clean()
         errors = {}
         if self.amount is not None and self.amount <= 0:
-            errors['amount'] = 'Invoice amount must be greater than zero.'
+            errors['amount'] = _('Invoice amount must be greater than zero.')
         if self.discount is not None and self.discount < 0:
-            errors['discount'] = 'Discount cannot be negative.'
+            errors['discount'] = _('Discount cannot be negative.')
         if self.amount is not None and self.discount is not None and self.discount > self.amount:
-            errors['discount'] = 'Discount cannot exceed invoice amount.'
+            errors['discount'] = _('Discount cannot exceed invoice amount.')
         if errors:
             raise ValidationError(errors)
 
@@ -60,7 +67,7 @@ class Invoice(models.Model):
                     try:
                         last_number = int(last.invoice_number.rsplit('-', 1)[1])
                     except (IndexError, ValueError):
-                        raise ValidationError({'invoice_number': 'The previous invoice number is invalid.'})
+                        raise ValidationError({'invoice_number': _('The previous invoice number is invalid.')})
                 self.invoice_number = f'{prefix}{last_number + 1:04d}'
                 self.full_clean()
                 return super().save(*args, **kwargs)
@@ -81,36 +88,40 @@ class Invoice(models.Model):
 
 class Payment(models.Model):
     METHOD_CHOICES = [
-        ('cash', 'Cash'),
-        ('card', 'Card transfer'),
-        ('online', 'Online gateway'),
-        ('transfer', 'Bank transfer'),
+        ('cash', _('Cash')),
+        ('card', _('Card transfer')),
+        ('online', _('Online gateway')),
+        ('transfer', _('Bank transfer')),
     ]
 
-    invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE, related_name='payments', verbose_name='Invoice')
-    amount = models.DecimalField('Amount (Toman)', max_digits=12, decimal_places=0)
-    method = models.CharField('Payment method', max_length=10, choices=METHOD_CHOICES, default='cash')
-    paid_at = models.DateTimeField('Paid at', default=timezone.now)
-    reference = models.CharField('Reference number', max_length=100, blank=True)
-    recorded_by = models.ForeignKey('auth.User', on_delete=models.SET_NULL, null=True, verbose_name='Recorded by')
+    invoice = models.ForeignKey(
+        Invoice, on_delete=models.CASCADE, related_name='payments', verbose_name=_('Invoice')
+    )
+    amount = models.DecimalField(_('Amount (Toman)'), max_digits=12, decimal_places=0)
+    method = models.CharField(_('Payment method'), max_length=10, choices=METHOD_CHOICES, default='cash')
+    paid_at = models.DateTimeField(_('Paid at'), default=timezone.now)
+    reference = models.CharField(_('Reference number'), max_length=100, blank=True)
+    recorded_by = models.ForeignKey(
+        'auth.User', on_delete=models.SET_NULL, null=True, verbose_name=_('Recorded by')
+    )
 
     class Meta:
-        verbose_name = 'Payment'
-        verbose_name_plural = 'Payments'
+        verbose_name = _('Payment')
+        verbose_name_plural = _('Payments')
         ordering = ['-paid_at']
 
     def clean(self):
         super().clean()
         errors = {}
         if self.amount is not None and self.amount <= 0:
-            errors['amount'] = 'Payment amount must be greater than zero.'
+            errors['amount'] = _('Payment amount must be greater than zero.')
         if self.invoice_id and self.amount is not None:
             invoice = self.invoice
             paid = invoice.payments.exclude(pk=self.pk).aggregate(total=models.Sum('amount'))['total'] or Decimal('0')
             if invoice.status == 'cancelled':
-                errors['invoice'] = 'Payments cannot be recorded for a cancelled invoice.'
+                errors['invoice'] = _('Payments cannot be recorded for a cancelled invoice.')
             elif self.amount > invoice.total - paid:
-                errors['amount'] = 'Payment amount exceeds the outstanding invoice balance.'
+                errors['amount'] = _('Payment amount exceeds the outstanding invoice balance.')
         if errors:
             raise ValidationError(errors)
 
