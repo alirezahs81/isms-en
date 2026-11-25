@@ -77,7 +77,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'isms.wsgi.application'
 
-# PostgreSQL — تنظیمات از متغیرهای محیطی قابل تغییر است
+# PostgreSQL — settings can be overridden through environment variables.
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -100,6 +100,7 @@ AUTH_PASSWORD_VALIDATORS = [
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'Asia/Tehran'
 USE_I18N = True
+LOCALE_PATHS = [BASE_DIR / 'locale']
 USE_TZ = True
 
 STATIC_URL = 'static/'
